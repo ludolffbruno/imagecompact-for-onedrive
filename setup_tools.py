@@ -22,11 +22,11 @@ def main():
         raise SystemExit('Esta distribuição requer Windows x64.')
     manifest=json.loads((BASE/'tools-manifest.json').read_text(encoding='utf-8'))
     hashes=manifest['binaries_sha256']
-    with tempfile.TemporaryDirectory(prefix='comprovantes-tools-') as scratch:
+    with tempfile.TemporaryDirectory(prefix='imagecompact-tools-') as scratch:
         packages={}
         for key in ('jpegtran','oxipng'):
             item=manifest[key];print('Baixando',key,item['version'])
-            request=urllib.request.Request(item['source'],headers={'User-Agent':'ComprovantesOptimizer/1.0'})
+            request=urllib.request.Request(item['source'],headers={'User-Agent':'ImageCompactForOneDrive/1.1'})
             context=truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             with urllib.request.urlopen(request,timeout=120,context=context) as response:
                 payload=response.read()
@@ -60,6 +60,6 @@ def main():
                 elif filename in ('LICENSE.txt','README.md'):
                     write(package.read(name),BASE/'tools/licenses/oxipng'/filename)
             if not found:raise ValueError('Oxipng ausente no pacote')
-    print('Ferramentas verificadas e instaladas em tools/. Execute python otimizador.py.')
+    print('Ferramentas verificadas e instaladas em tools/. Execute python main.py.')
 
 if __name__=='__main__':main()

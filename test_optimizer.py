@@ -2,7 +2,7 @@ import tempfile, unittest, sys
 from pathlib import Path
 from unittest.mock import patch
 from PIL import Image
-import otimizador as o
+import optimizer as o
 
 class WorkflowTests(unittest.TestCase):
     def setUp(self):
@@ -23,7 +23,7 @@ class WorkflowTests(unittest.TestCase):
         self.e.run()
         d=self.e.rows()[0][1]
         rows=dict(self.e.rows()); d=rows[self.p]
-        self.assertEqual(d['status'],'synced')
+        self.assertEqual(d['status'],'local')
         self.assertLess(len(self.p.read_bytes()),len(self.original))
         self.assertEqual(Path(d['backup']).read_bytes(),self.original)
         o.validate(Path(d['backup']),self.p)
@@ -40,7 +40,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(dict(self.e.rows())[self.p]['status'],'prepared')
         replaced=self.p.read_bytes()
         self.e.process(self.p)
-        self.assertEqual(dict(self.e.rows())[self.p]['status'],'synced')
+        self.assertEqual(dict(self.e.rows())[self.p]['status'],'local')
         self.assertEqual(self.p.read_bytes(),replaced)
     def test_corruption_never_replaces_original(self):
         with patch.object(o,'validate',side_effect=ValueError('corrompido')):
@@ -74,7 +74,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(self.p.read_bytes(),self.original)
         self.e.process(self.p)
         self.e.wait_pending(seconds=0)
-        self.assertEqual(dict(self.e.rows())[self.p]['status'],'synced')
+        self.assertEqual(dict(self.e.rows())[self.p]['status'],'local')
     def test_cloud_unknown_does_not_claim_uploaded(self):
         self.e.cloud=True
         self.e.process(self.p)
@@ -158,5 +158,35 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(rendered.size,(200,100))
     def test_unknown_profile_rejected(self):
         with self.assertRaises(ValueError):o.optimize(self.p,self.base/'out','invalido')
+    def test_any_folder_without_year_and_local_status(self):
+        source=self.base/'Fotos pessoais/Viagem'
+        source.mkdir(parents=True)
+        p=source/'paisagem.jpg'
+        Image.new('RGB',(128,128),'white').save(p,quality=98)
+        engine=o.Engine(self.base/'Fotos pessoais',log=lambda x:None,state=self.base/'local-state',cloud=False)
+        try:
+            engine.run()
+            row=dict(engine.rows())[p]
+            self.assertEqual(row['status'],'local')
+            self.assertEqual(o.summarize(engine.rows())['confirmed'],0)
+            self.assertGreater(o.summarize(engine.rows())['saved'],0)
+            with patch.object(o,'sync_state',return_value=True):
+                engine.cloud=True;engine.process(p)
+            self.assertEqual(dict(engine.rows())[p]['status'],'synced')
+        finally:engine.db.close()
+    def test_folder_reports_are_separate(self):
+        other=self.base/'Outra pasta';other.mkdir()
+        first=o.Engine(self.folder,log=lambda x:None,state=self.base/'shared',cloud=False)
+        second=o.Engine(other,log=lambda x:None,state=self.base/'shared',cloud=False)
+        try:
+            first.report();second.report()
+            self.assertNotEqual(first.year,second.year)
+            self.assertEqual(len(list((self.base/'shared').glob('relatorio-*.csv'))),2)
+        finally:first.db.close();second.db.close()
+    def test_data_inside_source_is_rejected(self):
+        engine=o.Engine(self.folder,log=lambda x:None,state=self.folder/'internal-data',cloud=False)
+        try:
+            with self.assertRaises(ValueError):engine.run()
+        finally:engine.db.close()
 
 if __name__=='__main__': unittest.main(verbosity=2)

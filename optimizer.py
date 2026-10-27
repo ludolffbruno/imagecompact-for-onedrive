@@ -8,9 +8,9 @@ from contextlib import closing
 from perfis import PROFILES, databases, original_for, summarize
 
 CODE_DIR = Path(__file__).resolve().parent
-BASE = Path(os.environ.get('COMPROVANTES_OPTIMIZER_DATA',
-    str(Path(os.environ.get('LOCALAPPDATA', Path.home())) / 'ComprovantesOptimizer'))).resolve()
-DEFAULT_ROOT = os.environ.get('COMPROVANTES_ROOT', str(Path.home() / 'OneDrive' / 'Comprovantes'))
+BASE = Path(os.environ.get('IMAGECOMPACT_DATA',
+    str(Path(os.environ.get('LOCALAPPDATA', Path.home())) / 'ImageCompactForOneDrive'))).resolve()
+DEFAULT_ROOT = os.environ.get('IMAGECOMPACT_ROOT', str(Path.home() / 'OneDrive' / 'Imagens'))
 JPEG = CODE_DIR / 'tools/jpeg-modern/Library/bin/jpegtran.exe'
 PNG = CODE_DIR / 'tools/oxi/oxipng.exe'
 HIDDEN = 0x08000000
@@ -156,11 +156,11 @@ def optimize(src, dst, profile='lossless'):
     return True
 
 class Engine:
-    def __init__(self, root, year, log=print, stop=None, state=None, cloud=True,
+    def __init__(self, root, year=None, log=print, stop=None, state=None, cloud=True,
                  profile='lossless', event=None, legacy=None):
         self.root = Path(root).resolve()
-        self.year = str(year)
-        self.folder = self.root / ('ANO ' + self.year)
+        self.year = str(year) if year is not None else 'pasta-'+hashlib.sha256(str(self.root).encode()).hexdigest()[:12]
+        self.folder = self.root / ('ANO ' + str(year)) if year is not None else self.root
         self.profile, self.event, self.total = profile, event, 0
         if profile != 'lossless' and profile not in PROFILES: raise ValueError('Perfil desconhecido')
         self.state = Path(state or BASE / (PROFILES[profile]['folder'] if profile in PROFILES else 'dados')).resolve()
@@ -192,9 +192,9 @@ class Engine:
     def report(self):
         rows = self.rows()
         saved = sum(d.get('before', 0)-d.get('after', d.get('before', 0))
-                    for _, d in rows if d.get('status') in ('pending', 'synced'))
+                    for _, d in rows if d.get('status') in ('pending', 'synced', 'local'))
         before = sum(d.get('before', 0) for _, d in rows
-                     if d.get('status') in ('pending','synced','unchanged'))
+                     if d.get('status') in ('pending','synced','local','unchanged'))
         counts = {}
         for _, d in rows: counts[d['status']] = counts.get(d['status'], 0) + 1
         if self.event:
@@ -206,14 +206,14 @@ class Engine:
             writer.writerow(['arquivo', 'estado', 'bytes_antes', 'bytes_depois', 'economia_bytes', 'erro', 'backup'])
             for p, d in rows:
                 a, b = d.get('before', 0), d.get('after', d.get('before', 0))
-                writer.writerow([str(p), d['status'], a, b, a-b if d['status'] in ('pending','synced') else 0,
+                writer.writerow([str(p), d['status'], a, b, a-b if d['status'] in ('pending','synced','local') else 0,
                                  d.get('error', ''), d.get('backup', '')])
         os.replace(tmp, out.with_suffix('.csv'))
-        text = (f'ANO {self.year} — perfil {self.profile}\nArquivos registrados: {len(rows)}\nEstados: {counts}\n'
+        text = (f'Pasta {self.folder} — perfil {self.profile}\nArquivos registrados: {len(rows)}\nEstados: {counts}\n'
                 f'Economia local confirmada: {saved:,} bytes ({saved/1024**2:.2f} MiB)\n'
                 f'Reducao sobre arquivos processados com sucesso: {100*saved/before if before else 0:.2f}%\n'
                 f'Tamanho antes: {before:,} bytes; depois: {before-saved:,} bytes (arquivos processados neste perfil).\n'
-                'synced = sincronizacao informada pelo OneDrive/Windows; pending = envio ainda nao confirmado.\n'
+                'synced = sincronizado no OneDrive; local = salvo localmente; pending = envio nao confirmado.\n'
                 'Backups locais sao mantidos e ocupam espaco; economia acima refere-se aos arquivos de origem.\n')
         tmp = out.with_suffix('.txt.tmp'); tmp.write_text(text, encoding='utf-8')
         os.replace(tmp, out.with_suffix('.txt'))
@@ -225,7 +225,7 @@ class Engine:
             if d['status'] == 'prepared':
                 d['status'] = 'pending'; self.save(p, d)
             if not self.cloud or sync_state(p) is True:
-                d['status'] = 'synced'; self.save(p, d)
+                d['status'] = 'synced' if self.cloud else 'local'; self.save(p, d)
             return True
         if current != d.get('old_hash'):
             d.update(status='conflict', error='Arquivo alterado externamente; nenhuma substituicao realizada.')
@@ -235,11 +235,14 @@ class Engine:
 
     def process(self, p):
         p = Path(p).resolve()
-        if not p.is_relative_to(self.folder): raise ValueError('Arquivo fora do ano selecionado')
+        if not p.is_relative_to(self.folder): raise ValueError('Arquivo fora da pasta selecionada')
         record = self.db.execute('SELECT data FROM files WHERE path=?', (str(p),)).fetchone()
         d = json.loads(record[0]) if record else {}
         if d.get('status') == 'conflict': return
-        if d.get('status') in ('synced', 'unchanged', 'unsupported'):
+        if d.get('status') == 'local' and self.cloud:
+            d['status']='pending'; self.save(p,d)
+            if self.check_pending(p,d): return
+        if d.get('status') in ('synced', 'local', 'unchanged', 'unsupported'):
             st = p.stat()
             if [st.st_size, st.st_mtime_ns] == d.get('signature'): return
             if d.get('new_hash') and sha(p) == d['new_hash']: return
@@ -320,9 +323,9 @@ class Engine:
         return False
 
     def run(self):
-        if not self.folder.is_dir(): raise ValueError('Pasta do ano nao encontrada: ' + str(self.folder))
+        if not self.folder.is_dir(): raise ValueError('Pasta nao encontrada: ' + str(self.folder))
         if self.state.is_relative_to(self.root): raise ValueError('Backups devem ficar fora da pasta de origem')
-        self.log('Enumerando pastas de ' + self.year + '...')
+        self.log('Enumerando imagens em ' + str(self.folder) + '...')
         files = []
         def walk_error(error): raise error
         for directory, dirs, names in os.walk(self.folder, followlinks=False, onerror=walk_error):

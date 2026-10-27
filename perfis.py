@@ -54,7 +54,7 @@ def original_for(path, current_hash, dbs):
 def summarize(rows):
     counts={}
     for _,d in rows: counts[d['status']]=counts.get(d['status'],0)+1
-    successful=[d for _,d in rows if d['status'] in ('pending','synced','unchanged')]
+    successful=[d for _,d in rows if d['status'] in ('pending','synced','local','unchanged')]
     before=sum(d.get('before',0) for d in successful)
     after=sum(d.get('after',d.get('before',0)) for d in successful)
     confirmed=sum(d.get('before',0)-d.get('after',d.get('before',0)) for d in successful if d['status']=='synced')

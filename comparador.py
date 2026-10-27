@@ -7,10 +7,10 @@ from PIL import Image, ImageOps, ImageTk
 from perfis import PROFILES, databases, original_for, digest, human
 
 def load_pair(path, base, profile, preview=False):
-    from otimizador import optimize
+    from optimizer import optimize
     path=Path(path).resolve()
     # Cópia temporária mantém a leitura consistente enquanto o OneDrive trabalha.
-    with tempfile.TemporaryDirectory(prefix='comparacao-') as folder:
+    with tempfile.TemporaryDirectory(prefix='imagecompact-preview-') as folder:
         current=Path(folder)/'atual'
         shutil.copyfile(path,current)
         original=original_for(path,digest(current),databases(base))
@@ -42,8 +42,8 @@ def open_comparator(parent, base, root, year, profile):
     canvases=[];headings=[];photos=[];images=[];center=[.5,.5];scale=.25;generation=0;closing=False
     events=queue.Queue()
     def choose():
-        path=filedialog.askopenfilename(parent=win,initialdir=str(Path(root)/('ANO '+year)),
-            title='Selecionar comprovante',filetypes=[('Imagens','*.jpg *.jpeg *.png'),('Todos','*.*')])
+        path=filedialog.askopenfilename(parent=win,initialdir=str(Path(root)/('ANO '+str(year)) if year is not None else Path(root)),
+            title='Selecionar imagem',filetypes=[('Imagens','*.jpg *.jpeg *.png'),('Todos','*.*')])
         if path: selected.set(path);load()
     def load():
         nonlocal generation
