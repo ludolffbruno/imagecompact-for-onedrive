@@ -1,0 +1,23 @@
+{
+  "jpegtran": {
+    "version": "3.2.0",
+    "source": "https://api.anaconda.org/download/conda-forge/libjpeg-turbo/3.2.0/win-64/libjpeg-turbo-3.2.0-hfd05255_1.conda",
+    "archive_sha256": "df78ab4c0eecb3dd9331898f96baeed8e5ca1c363346332517abeb0b614b9a53"
+  },
+  "oxipng": {
+    "version": "10.2.1",
+    "source": "https://github.com/oxipng/oxipng/releases/download/v10.2.1/oxipng-10.2.1-x86_64-pc-windows-msvc.zip",
+    "archive_sha256": "7e940f83ee46874b73f53031f96a15834cb70b220af27391fb06fe7b4dd798e1"
+  },
+  "binaries_sha256": {
+    "tools\\jpeg-modern\\Library\\bin\\cjpeg.exe": "652b251a6528a5d3c9f780a0f967e7bf1ad544192ce228d06ae508263d22cafd",
+    "tools\\jpeg-modern\\Library\\bin\\djpeg.exe": "e13be1183efee7d12302297fef7e7b02cbb3ae6628c5ac60efb6730cee35cbad",
+    "tools\\jpeg-modern\\Library\\bin\\jpeg8.dll": "c8ae4649b8bcf41ec8bfd359bd6239ff7622e2041554cee3e99f740698db848f",
+    "tools\\jpeg-modern\\Library\\bin\\jpegtran.exe": "784bdbe6716abd2963b0b81f747fcc99f8fd4e4bf907fb53812c43221c2d6c2f",
+    "tools\\jpeg-modern\\Library\\bin\\rdjpgcom.exe": "9d47f6ef875ecc13324df0c98bf81be7bf91b5c051f4469aaf00a25d79bfb121",
+    "tools\\jpeg-modern\\Library\\bin\\tjbench.exe": "7f1ad5b668e7cb9bfb612fad483e0aee097d4ff9eeff48636f7387c69687164d",
+    "tools\\jpeg-modern\\Library\\bin\\turbojpeg.dll": "ba53786a4935b86753e7eaf56e48745e59c210572e878d569958ef85cf0c0e0d",
+    "tools\\jpeg-modern\\Library\\bin\\wrjpgcom.exe": "3d6da93edc22585e8ecb56f8d14180d465cfc0c4b59280027e5d633db7360292",
+    "tools\\oxi\\oxipng-10.2.1-x86_64-pc-windows-msvc\\oxipng.exe": "35ae3980ab831af64f4aecc98f69b81bfa146fa750a61d17ebbb12520128cbc8"
+  }
+}

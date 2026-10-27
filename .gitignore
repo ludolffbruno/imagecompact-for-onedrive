@@ -1,0 +1,30 @@
+# Dados operacionais nunca devem ser publicados
+dados*/
+backups/
+temporarios/
+*.sqlite*
+*.db
+*.csv
+*.log
+.env*
+!.env.example
+config.local.*
+inventario-*.json
+relatorio-*
+# Dependencias, ferramentas baixadas e build
+.venv/
+__pycache__/
+*.py[cod]
+tools/
+*.exe
+*.dll
+build/
+dist/
+*.zip
+*.conda
+# Imagens privadas; apenas assets demonstrativos sao versionados
+*.jpg
+*.jpeg
+*.png
+*.pdf
+!assets/*.png
