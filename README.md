@@ -20,9 +20,9 @@ Aplicativo desktop para otimizar fotografias, imagens de produtos, digitalizaç�
 
 Funciona com pastas locais e pastas sincronizadas pelo cliente OneDrive no Windows. Não exige nomes específicos de empresas, pastas ou anos.
 
-![Demonstração ilustrativa do ImageCompact for OneDrive](assets/interface-demo.png)
+![Captura real da central de otimização do ImageCompact](assets/interface-demo.png)
 
-<sub>Imagem ilustrativa produzida por IA, com dados fictícios e contadores zerados. Não representa resultados de processamento.</sub>
+<sub>Captura real de uma versão operacional anterior à interface pública atual, com parte do caminho de origem ocultada. Os indicadores pertencem à execução exibida e não representam uma promessa de redução. A versão pública atual permite selecionar qualquer pasta, sem exigir organização por ano.</sub>
 
 ## 🔄 Como funciona
 
@@ -195,7 +195,7 @@ imagecompact-for-onedrive/
 ## 🔐 Privacidade
 
 - O repositório não contém fotos, relatórios, inventários, bancos ou backups de usuários.
-- A ilustração usa dados fictícios e não apresenta métricas de uma execução real.
+- A captura de interface foi disponibilizada pelo autor, com parte do caminho de origem ocultada. Não inclui os arquivos processados; seus indicadores se referem apenas à execução exibida.
 - Credenciais e tokens do OneDrive não são armazenados pelo aplicativo.
 - `.gitignore` bloqueia arquivos operacionais, imagens privadas e dependências baixadas.
 
